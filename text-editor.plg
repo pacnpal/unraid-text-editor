@@ -6,6 +6,7 @@
 <!ENTITY launch "Tools/TextEditor">
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY md5 "06420656d2953347a9736fa71faa773e">
+<!ENTITY repo_url "https://github.com/pacnpal/unraid-text-editor/raw/master">
 ]>
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" min="6.9.2">
 <CHANGES>
@@ -19,7 +20,7 @@ rm -f $(ls /boot/config/plugins/&name;/&name;*.txz 2>/dev/null | grep -v '&versi
 </INLINE>
 </FILE>
 <FILE Name="/boot/config/plugins/&name;/&name;-&version;.txz" Run="installpkg">
-<LOCAL>/boot/config/plugins/&name;/&name;-&version;.txz</LOCAL>
+<URL>&repo_url;/&name;-&version;.txz</URL>
 <MD5>&md5;</MD5>
 </FILE>
 <FILE Run="/bin/bash">
