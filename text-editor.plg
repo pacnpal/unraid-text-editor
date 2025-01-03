@@ -5,7 +5,7 @@
 <!ENTITY version "2025.01.03">
 <!ENTITY pluginURL "https://raw.githubusercontent.com/pacnpal/unraid-text-editor/refs/heads/master/text-editor.plg">
 <!ENTITY source "/boot/config/plugins/&name;/&name;-&version;">
-<!ENTITY MD5 "06420656d2953347a9736fa71faa773e">
+<!ENTITY MD5 "0e3b15bf18d4a3bc22c722838a8e2325">
 ]>
 <PLUGIN name="&name;" author="&author;" version="&version;" pluginURL="&pluginURL;" min="6.9.2">
 
