@@ -1,0 +1,68 @@
+<?xml version="1.0" standalone="yes"?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name "text-editor">
+<!ENTITY author "Your Name">
+<!ENTITY version "2025.01.03">
+<!ENTITY launch "Settings/TextEditor">
+<!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
+<!ENTITY github "username/repository">
+<!ENTITY pluginURL "https://raw.githubusercontent.com/&github;/master/archive/&name;.plg">
+<!ENTITY source "/boot/config/plugins/&name;/&name;-2025.01.03.txz">
+<!ENTITY MD5 "">
+]>
+
+<PLUGIN name="&name;" author="&author;" version="2025.01.03" launch="&launch;" pluginURL="&pluginURL;" min="6.9.2">
+
+<CHANGES>
+###2025.01.03
+- Initial Release
+</CHANGES>
+
+<FILE Run="/bin/bash">
+<INLINE>
+# Remove old packages
+rm -f $(ls /boot/config/plugins/&name;/&name;*.txz 2>/dev/null | grep -v '2025.01.03')
+
+# Remove old 'bundle' files
+rm -f /tmp/plugins/&name;.*.bundle.txz
+</INLINE>
+</FILE>
+
+<FILE Name="&source;" Run="upgradepkg --install-new">
+<URL>https://raw.githubusercontent.com/&github;/master/archive/&name;-2025.01.03.txz</URL>
+<MD5></MD5>
+</FILE>
+
+<FILE Name="/boot/config/plugins/&name;/&name;.cfg">
+<INLINE>
+<![CDATA[
+# Plugin configuration
+]]>
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash">
+<INLINE>
+echo ""
+echo "-----------------------------------------------------------"
+echo " Plugin: &name;"
+echo " Version: 2025.01.03"
+echo " Copyright &author;, 2025"
+echo "-----------------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+# Remove plugin
+removepkg &name;-2025.01.03
+rm -rf &plugdir;
+rm -rf /boot/config/plugins/&name;
+
+# Unregister plugin from web gui
+rm -f /usr/local/emhttp/webGui/&name;
+</INLINE>
+</FILE>
+
+</PLUGIN>

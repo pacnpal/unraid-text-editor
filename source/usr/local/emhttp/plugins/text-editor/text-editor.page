@@ -1,0 +1,166 @@
+Menu="Tools"
+Type="xmenu"
+Title="Text Editor"
+Icon="icon-edit"
+---
+<?PHP
+/* Copyright 2025, Your Name */
+
+$docroot = $docroot ?? $_SERVER['DOCUMENT_ROOT'] ?: '/usr/local/emhttp';
+
+require_once "$docroot/webGui/include/Wrappers.php";
+require_once "$docroot/webGui/include/Helpers.php";
+
+// Check authentication
+if (!isset($var)) {
+    // shellcheck disable=SC1091
+    require_once "$docroot/webGui/include/Secure.php";
+    $var = parse_ini_file("$docroot/state/var.ini");
+    extract(parse_ini_file("$docroot/state/network.ini", true));
+}
+
+// Get file path from URL
+$file = $_GET['file'] ?? '';
+if ($file) {
+    $file = urldecode($file);
+    $file = realpath($file) ?: $file;
+}
+
+function is_text_file($file) {
+    if (!$file || !file_exists($file)) return false;
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $file);
+    finfo_close($finfo);
+    return (strpos($mime, 'text/') === 0);
+}
+
+function get_file_perms($file) {
+    if (!$file || !file_exists($file)) return '';
+    return substr(sprintf('%o', fileperms($file)), -4);
+}
+?>
+
+<style>
+.fileinfo{margin-bottom:10px;}
+.CodeMirror{height:auto;border:1px solid #ddd;border-radius:4px;}
+.CodeMirror-scroll{min-height:500px;}
+#buttons{position:fixed;left:0;right:0;bottom:0;background-color:#f5f5f5;padding:8px;border-top:1px solid #ddd;z-index:999;}
+</style>
+
+<script src="<?autov('/webGui/javascript/codemirror/lib/codemirror.js')?>"></script>
+<link rel="stylesheet" href="<?autov('/webGui/javascript/codemirror/lib/codemirror.css')?>">
+<script src="<?autov('/webGui/javascript/codemirror/mode/xml/xml.js')?>"></script>
+<script src="<?autov('/webGui/javascript/codemirror/mode/javascript/javascript.js')?>"></script>
+<script src="<?autov('/webGui/javascript/codemirror/mode/css/css.js')?>"></script>
+<script src="<?autov('/webGui/javascript/codemirror/mode/php/php.js')?>"></script>
+<script src="<?autov('/webGui/javascript/codemirror/mode/shell/shell.js')?>"></script>
+<script src="<?autov('/webGui/javascript/codemirror/addon/selection/active-line.js')?>"></script>
+
+<form markdown="1" method="POST" onsubmit="return false">
+File to edit:
+: <input type="text" name="filepath" id="filepath" value="<?=htmlspecialchars($file)?>" class="wide" placeholder="Enter file path or use File Manager...">
+  <?if ($file):?>
+  <?if (is_text_file($file)):?>
+  <span class="green-text">Text file (<?=get_file_perms($file)?>)</span>
+  <?else:?>
+  <span class="red-text">Not a text file or file not accessible</span>
+  <?endif;?>
+  <?endif;?>
+
+<div id="editor_container" style="display:<?=$file?'block':'none'?>">
+_(Content)_:
+: <textarea id="editor" name="editor" spellcheck="false"><?=htmlspecialchars(file_exists($file) && is_readable($file) ? file_get_contents($file) : '')?></textarea>
+</div>
+
+<div id="buttons">
+<button type="button" onclick="loadFile()" style="margin-right:10px">_(Load)_</button>
+<button type="button" onclick="saveFile()">_(Save)_</button>
+<span class="status" style="margin-left:10px"></span>
+</div>
+</form>
+
+<script>
+var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+    lineNumbers: true,
+    lineWrapping: true,
+    styleActiveLine: true,
+    matchBrackets: true,
+    mode: 'text',
+    indentWithTabs: true,
+    indentUnit: 4,
+    theme: 'default'
+});
+
+function getFileExtension(filename) {
+    return filename.split('.').pop().toLowerCase();
+}
+
+function setEditorMode(filename) {
+    var ext = getFileExtension(filename);
+    var mode = 'text';
+    
+    switch(ext) {
+        case 'php': mode = 'php'; break;
+        case 'js': mode = 'javascript'; break;
+        case 'css': mode = 'css'; break;
+        case 'xml':
+        case 'html': mode = 'xml'; break;
+        case 'sh':
+        case 'bash': mode = 'shell'; break;
+    }
+    
+    editor.setOption('mode', mode);
+}
+
+function loadFile() {
+    var filepath = $('#filepath').val();
+    if (!filepath) {
+        swal({title:'_(Error)_',text:'_(Please specify a file path)_',type:'error',confirmButtonText:'_(Ok)_'});
+        return;
+    }
+    
+    $.post('/plugins/text-editor/include/fileop.php', {action:'read', file:filepath}, function(data) {
+        if (data.error) {
+            swal({title:'_(Error)_',text:data.error,type:'error',confirmButtonText:'_(Ok)_'});
+        } else {
+            $('#editor_container').show();
+            editor.setValue(data.content);
+            setEditorMode(filepath);
+            editor.refresh();
+        }
+    }).fail(function() {
+        swal({title:'_(Error)_',text:'_(Failed to load file)_',type:'error',confirmButtonText:'_(Ok)_'});
+    });
+}
+
+function saveFile() {
+    var filepath = $('#filepath').val();
+    if (!filepath) {
+        swal({title:'_(Error)_',text:'_(Please specify a file path)_',type:'error',confirmButtonText:'_(Ok)_'});
+        return;
+    }
+    
+    var content = editor.getValue();
+    $.post('/plugins/text-editor/include/fileop.php', {action:'write', file:filepath, content:content}, function(data) {
+        if (data.error) {
+            swal({title:'_(Error)_',text:data.error,type:'error',confirmButtonText:'_(Ok)_'});
+        } else {
+            swal({title:'_(Success)_',text:'_(File saved successfully)_',type:'success',confirmButtonText:'_(Ok)_'});
+        }
+    }).fail(function() {
+        swal({title:'_(Error)_',text:'_(Failed to save file)_',type:'error',confirmButtonText:'_(Ok)_'});
+    });
+}
+
+if ($('#filepath').val()) {
+    setEditorMode($('#filepath').val());
+}
+
+// Register keyboard shortcuts
+$(document).bind('keydown', function(e) {
+    if (e.ctrlKey && e.which === 83) { // Ctrl+S
+        e.preventDefault();
+        saveFile();
+    }
+});
+</script>
