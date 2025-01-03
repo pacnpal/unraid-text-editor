@@ -7,26 +7,21 @@
 <!ENTITY plugdir "/usr/local/emhttp/plugins/&name;">
 <!ENTITY md5 "06420656d2953347a9736fa71faa773e">
 ]>
-
 <PLUGIN name="&name;" author="&author;" version="&version;" launch="&launch;" min="6.9.2">
-
 <CHANGES>
 ###2025.01.03
 - Initial Release
 </CHANGES>
-
 <FILE Run="/bin/bash">
 <INLINE>
 # Remove old packages
 rm -f $(ls /boot/config/plugins/&name;/&name;*.txz 2>/dev/null | grep -v '&version;')
 </INLINE>
 </FILE>
-
 <FILE Name="/boot/config/plugins/&name;/&name;-&version;.txz" Run="installpkg">
 <LOCAL>/boot/config/plugins/&name;/&name;-&version;.txz</LOCAL>
 <MD5>&md5;</MD5>
 </FILE>
-
 <FILE Run="/bin/bash">
 <INLINE>
 echo ""
@@ -37,14 +32,11 @@ echo "----------------------------------------------------"
 echo ""
 </INLINE>
 </FILE>
-
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
-# Remove plugin
 removepkg &name;-&version;
 rm -rf &plugdir;
 rm -rf /boot/config/plugins/&name;
 </INLINE>
 </FILE>
-
 </PLUGIN>
